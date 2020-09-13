@@ -57,9 +57,9 @@ X_train, X_test, y_train, y_test = train_test_split(train_values_prepared_df, tr
 y_train, y_test = y_train.iloc[:,0], y_test.iloc[:,0]
 
 classifier_dict = {'xgb_clf': XGBClassifier(n_jobs=-1, verbosity=1, max_depth=24, tree_method='auto'),
-                #    'lin_svc_clf': LinearSVC(dual=False, random_state=42), 
+                   'lin_svc_clf': LinearSVC(dual=False, random_state=42), 
                 #    'rf_clf': RandomForestClassifier(random_state=42, n_jobs=-1),
-                #    'lr_clf': LogisticRegression(random_state=42, n_jobs=-1, max_iter=1e4)
+                   'lr_clf': LogisticRegression(random_state=42, n_jobs=-1, max_iter=1e4)
                    }
 
 clf_list = clf_func(classifier_dict)
