@@ -41,3 +41,16 @@ def run_clf(X_train, X_test, y_train, y_test, clf_list, model_dir):
             dump(item.classifier, model_file)
             accuracy_score_dict[item.classifier.__class__.__name__] = print_accuracy(item.classifier, t2, X_test, y_test.values)
     print(f'\nTotal time elasped: {time() - t0:.4f} sec')
+
+
+def grid_search_func(X_train, y_train, grid_search, joblib_file):
+    t0 = time()
+    if joblib_file.is_file():
+        grid_search = load(joblib_file)
+    else:
+        grid_search.fit(X_train, y_train)
+        dump(grid_search, joblib_file)
+    print(f'Best parameters for grid search: {grid_search.best_params_}\n')
+    print(f'Best estimator for grid search: {grid_search.best_estimator_}\n')
+    print(f'Time elapsed: {time() - t0:.4f} sec')
+    return grid_search
