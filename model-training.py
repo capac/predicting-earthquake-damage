@@ -1,8 +1,7 @@
 #/usr/bin/env python
 
 import pandas as pd
-from pathlib import Path, PurePath
-from time import time
+from pathlib import Path
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
@@ -12,8 +11,7 @@ from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
 # from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from xgboost import XGBClassifier
-from joblib import dump, load
-from helper_funcs.funcs import clf_func, print_accuracy
+from helper_funcs.funcs import clf_func, print_accuracy, run_clf
 
 data_dir = Path('./data')
 model_dir = Path('./models')
@@ -63,19 +61,4 @@ classifier_dict = {'xgb_clf': XGBClassifier(n_jobs=-1, verbosity=1, max_depth=24
                    }
 
 clf_list = clf_func(classifier_dict)
-
-t0 = time()
-list_files = [x for x in model_dir.iterdir() if x.is_file]
-accuracy_score_dict = dict()
-for item in clf_list:
-    model_file = PurePath.joinpath(model_dir, item.name+'.sav')
-    if model_file in list_files:
-        t1 = time()
-        model_clf = load(model_file)
-        accuracy_score_dict[model_clf.__class__.__name__] = print_accuracy(model_clf, t1, X_test, y_test.values)
-    else:
-        t2 = time()
-        item.classifier.fit(X_train, y_train.values)
-        dump(item.classifier, model_file)
-        accuracy_score_dict[item.classifier.__class__.__name__] = print_accuracy(item.classifier, t2, X_test, y_test.values)
-print(f'\nTotal time elasped: {time() - t0:.4f} sec')
+run_clf(X_train, X_test, y_train, y_test, clf_list, model_dir)
