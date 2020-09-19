@@ -5,7 +5,7 @@ from helper_funcs.data_preparation import create_dataframes, prepare_data, \
 from helper_funcs.funcs import clf_func, run_clf
 from sklearn.linear_model import LogisticRegression
 from xgboost import XGBClassifier
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, StratifiedShuffleSplit
 from pathlib import Path
 
 
@@ -23,17 +23,31 @@ train_values_df, test_values_df, train_labels_df = create_dataframes(
 train_values_df, train_labels_df, test_values_df, num_attrib, cat_attrib = \
     prepare_data(train_values_df, test_values_df, train_labels_df)
 
-# generating stratified training and validation data sets
-# sss = StratifiedShuffleSplit(n_splits=1, test_size=0.3, random_state=42)
-# for train_index, val_index in sss.split(train_values_df, train_values_df['damage_grade']):
-#     strat_train_set = train_values_df.loc[train_index]
-#     strat_val_set = train_values_df.loc[val_index]
-
 # pipeline to place median for NaNs and normalize data
 prepared_train_values_df = feature_pipeline(
     train_values_df, num_attrib, cat_attrib)
 
 print(f'prepared_train_values_df.shape: {prepared_train_values_df.shape}')
+
+# generating stratified training and validation data sets
+sss = StratifiedShuffleSplit(n_splits=1, test_size=0.3, random_state=42)
+for train_index, val_index in sss.split(prepared_train_values_df, train_labels_df):
+    X_strat_train = prepared_train_values_df[train_index]
+    y_strat_train = train_labels_df.iloc[train_index]
+    X_strat_val = prepared_train_values_df[val_index]
+    y_strat_val = train_labels_df.iloc[val_index]
+y_strat_train, y_strat_val = y_strat_train.iloc[:, 0], y_strat_val.iloc[:, 0]  # type: ignore
+
+print(f'X_strat_train.shape: {X_strat_train.shape}')  # type: ignore
+print(f'y_strat_train: {y_strat_train.shape}')  # type: ignore
+print(f'X_strat_val.shape: {X_strat_val.shape}')  # type: ignore
+print(f'y_strat_val.shape: {y_strat_val.shape}\n')  # type: ignore
+
+print(f'y_strat_train.value_counts()/len(y_strat_train):\n\
+{y_strat_train.value_counts()/len(y_strat_train)}\n')  # type: ignore
+print(f'y_strat_val.value_counts()/len(y_strat_val):\n\
+{y_strat_val.value_counts()/len(y_strat_val)}\n')  # type: ignore
+
 
 X_train, X_val, y_train, y_val = train_test_split(prepared_train_values_df, train_labels_df,
                                                   test_size=0.3, random_state=42)
@@ -62,4 +76,5 @@ clf_list = clf_func(classifier_dict)
 # print(f'prepared_X_train.toarray().shape:\n{prepared_X_train.toarray().shape}\n')
 
 # runs actual training on classifiers and outputs results to screen
-run_clf(X_train, X_val, y_train, y_val, clf_list, model_dir)
+# run_clf(X_train, X_val, y_train, y_val, clf_list, model_dir)
+run_clf(X_strat_train, X_strat_val, y_strat_train, y_strat_val, clf_list, model_dir)  # type: ignore
