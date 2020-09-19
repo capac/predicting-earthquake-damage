@@ -9,6 +9,7 @@ from sklearn.model_selection import GridSearchCV, StratifiedShuffleSplit
 from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, f1_score
 from joblib import load
+from numpy import prod
 # from sklearn.ensemble import VotingClassifier
 
 home = os.environ['HOME']
@@ -53,7 +54,7 @@ y_strat_train, y_strat_val = y_strat_train.iloc[:, 0], y_strat_val.iloc[:, 0]  #
 xgb_clf = XGBClassifier(n_jobs=-1, verbosity=1, tree_method='hist')
 xgb_params = {'max_depth': [10, 15, 20], 'n_estimators': [100, 200]}
 xgb_grid_search = GridSearchCV(xgb_clf, xgb_params, cv=5, scoring='neg_mean_squared_error',
-                               return_train_score=True, n_jobs=-1, verbosity=1)
+                               return_train_score=True, n_jobs=-1, verbose=1)
 
 # grid search computation
 xgb_joblib_file = PurePath.joinpath(model_dir, 'xgb_grid_search.sav')
@@ -61,7 +62,7 @@ xgb_grid_search_output = grid_search_func(X_strat_train, y_strat_train,  # type:
                                           xgb_grid_search, xgb_joblib_file)  # type: ignore
 
 # output list of RSME in decreasing order
-grid_results(xgb_grid_search_output, 8)
+grid_results(xgb_grid_search_output, prod([len(i) for i in list(xgb_params.values())]))
 
 # accuracy performance metric
 y_pred = xgb_grid_search_output.predict(X_strat_val)  # type: ignore
