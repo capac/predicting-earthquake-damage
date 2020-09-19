@@ -33,10 +33,10 @@ train_values_df, train_labels_df, test_values_df, num_attrib, \
     cat_attrib = prepare_data(train_values_df, test_values_df, train_labels_df)
 
 # pipeline to place median for NaNs and normalize data
-train_values_prepared_df = feature_pipeline(train_values_df, num_attrib, cat_attrib)
+prepared_train_values_df = feature_pipeline(train_values_df, num_attrib, cat_attrib)
 
 # generating training and test data sets
-X_train, X_test, y_train, y_test = train_test_split(train_values_prepared_df, train_labels_df,
+X_train, X_test, y_train, y_test = train_test_split(prepared_train_values_df, train_labels_df,
                                                     test_size=0.3, random_state=42)
 y_train, y_test = y_train.iloc[:, 0], y_test.iloc[:, 0]
 
