@@ -23,7 +23,7 @@ def print_accuracy(model_clf, X_val, y_val, start_time=None, print_output=False)
     acc_score = accuracy_score(y_pred, y_val)
     #  only prints if print_output=True
     if print_output:
-        sys.stdout.write(f'\nAccuracy score for {model_clf.__class__.__name__}: {acc_score:.6f}')
+        sys.stdout.write(f'\nAccuracy score for {model_clf.__class__.__name__}: {acc_score:.8f}')
         sys.stdout.write(f'\nTime elapsed: {time() - start_time:.4f} sec')
         sys.stdout.write(f'\nClassification report:\n{classification_report(y_pred, y_val, digits=4)}')
     return acc_score
