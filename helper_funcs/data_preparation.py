@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
-from pandas import read_csv, concat
+from pandas import read_csv, Series
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
-from scipy.sparse import hstack
+from scipy.sparse import hstack, csr_matrix, vstack
+import numpy as np
+from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.utils import resample
@@ -41,32 +43,63 @@ def prepare_data(train_values_df, test_values_df, train_labels_df):
     test_values_df[num_attrib] = test_values_df[num_attrib].astype('int32')
 
     # convert object data type in train_labels_df to categorical data type
-    train_labels_df['damage_grade'] = train_labels_df['damage_grade'].astype('category')
+    train_labels_df['damage_grade'] = train_labels_df['damage_grade'].astype(
+        'category')
 
     return train_values_df, train_labels_df, test_values_df, num_attrib, cat_attrib
 
 
-# generating training and validation data sets
-def split_to_train_val_with_resampling(train_values_df, train_labels_df, upsampling=False):
+# generating upsampled training and validation data sets from sparse matrices
+def stratified_shuffle_data_split(prepared_train_values, train_labels_df):
+    sss = StratifiedShuffleSplit(n_splits=1, test_size=0.3, random_state=42)
+    for train_index, val_index in sss.split(prepared_train_values, train_labels_df):
+        X_strat_train = prepared_train_values[train_index]
+        y_strat_train = train_labels_df.iloc[train_index]
+        X_strat_val = prepared_train_values[val_index]
+        y_strat_val = train_labels_df.iloc[val_index]
+    y_strat_train, y_strat_val = y_strat_train.iloc[:, 0], y_strat_val.iloc[:, 0]  # type: ignore
+    # print(f'X_strat_train.shape: {X_strat_train.shape}')  # type: ignore
+    # print(f'y_strat_train: {y_strat_train.shape}')  # type: ignore
+    # print(f'X_strat_val.shape: {X_strat_val.shape}')  # type: ignore
+    # print(f'y_strat_val.shape: {y_strat_val.shape}\n')  # type: ignore
+    return X_strat_train, y_strat_train, X_strat_val, y_strat_val  # type: ignore
+
+
+# generating training and validation data sets from sparse matrices
+def train_val_upsampling_split(train_values_df, train_labels_df, upsampling=False):
     X_train, X_val, y_train, y_val = train_test_split(
         train_values_df, train_labels_df, test_size=0.3, random_state=42)
-    y_train, y_val = y_train.iloc[:, 0], y_val.iloc[:, 0]
     if upsampling:
-        X = hstack(X_train, y_train)
+        X = hstack((X_train, y_train)).toarray()
         level_list = []
-        for index in range(1, 4):
-            level_list.append(X[X['damage_grade'] == index])
+        for level in range(1, 4):
+            level_filter = X[:, -1] == level
+            level_X = X[level_filter, 0:-1]
+            level_y = X[level_filter, -1].ravel()
+            level_list.append([level_X, level_y])
         level_low, level_medium, level_high = level_list
         # medium level has the highest count, so let's increase the other two by upsampling
         upsampled_list = []
         for upsampled in [level_low, level_high]:
-            upsampled_list.append(resample(upsampled, replace=True,  # sample with replacement
-                                           n_samples=len(level_medium),  # match number in medium level
-                                           random_state=33))  # reproducible results
-        upsampled_list.append(level_medium)
-        X_resampled = concat(upsampled_list)
-        X_train = X_resampled.drop(['damage_grade'], axis=1)
-        y_train = X_resampled['damage_grade']
+            tmp_upsampled_list = []
+            for arr in upsampled:
+                tmp_upsampled_list.append(resample(arr,
+                                          replace=True,  # sample with replacement
+                                          n_samples=len(level_medium[1]),  # match number in medium level
+                                          random_state=33))  # reproducible results
+            upsampled_list.append(tmp_upsampled_list)  # type: ignore
+        upsampled_list.append(level_medium)  # notice: append works in place
+        mat_x_list, mat_y_list = [], []
+        for mat_x, mat_y in upsampled_list:
+            mat_x_list.append(csr_matrix(mat_x))
+            mat_y_list.append(mat_y)
+        X_train = vstack(mat_x_list)
+        y_train = Series(np.concatenate(mat_y_list, axis=0).ravel())
+        y_val = y_val.iloc[:, 0]
+    # print(f'X_train.shape: {X_train.shape}')
+    # print(f'y_train.shape: {y_train.shape}')
+    # print(f'X_val.shape: {X_val.shape}')
+    # print(f'y_val.shape: {y_val.shape}\n')
     return X_train, X_val, y_train, y_val
 
 
@@ -77,4 +110,6 @@ def feature_pipeline(train_values_df, num_attrib, cat_attrib):
     full_pipeline = ColumnTransformer([('num', num_pipeline, num_attrib),
                                        ('cat', OneHotEncoder(), cat_attrib),
                                        ], n_jobs=-1)
-    return full_pipeline.fit_transform(train_values_df)
+    prepared_train_values = full_pipeline.fit_transform(train_values_df)
+    # print(f'prepared_train_values.shape: {prepared_train_values.shape}')
+    return prepared_train_values
