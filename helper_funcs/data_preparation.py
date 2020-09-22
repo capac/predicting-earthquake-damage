@@ -78,7 +78,7 @@ def train_val_upsampling_split(train_values_df, train_labels_df, upsampling=Fals
             level_y = X[level_filter, -1].ravel()
             level_list.append([level_X, level_y])
         level_low, level_medium, level_high = level_list
-        # medium level has the highest count, so let's increase the other two by upsampling
+        # medium level has the highest count, so let's increase the other two by up-sampling
         upsampled_list = []
         for upsampled in [level_low, level_high]:
             tmp_upsampled_list = []

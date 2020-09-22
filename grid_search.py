@@ -4,8 +4,8 @@ import os
 from pandas import read_csv
 from pathlib import Path, PurePath
 from helper_funcs.funcs import grid_search_func, grid_results, print_accuracy
-from helper_funcs.data_preparation import prepare_data, feature_pipeline
-from sklearn.model_selection import GridSearchCV, StratifiedShuffleSplit
+from helper_funcs.data_preparation import prepare_data, feature_pipeline, stratified_shuffle_data_split
+from sklearn.model_selection import GridSearchCV
 from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, f1_score
 from joblib import load
@@ -34,21 +34,11 @@ train_values_df, train_labels_df, test_values_df, num_attrib, \
     cat_attrib = prepare_data(train_values_df, test_values_df, train_labels_df)
 
 # pipeline to place median for NaNs and normalize data
-prepared_train_values_df = feature_pipeline(train_values_df, num_attrib, cat_attrib)
+prepared_train_values = feature_pipeline(train_values_df, num_attrib, cat_attrib)
 
 # generating stratified training and validation data sets
-sss = StratifiedShuffleSplit(n_splits=1, test_size=0.3, random_state=42)
-for train_index, val_index in sss.split(prepared_train_values_df, train_labels_df):
-    X_strat_train = prepared_train_values_df[train_index]
-    y_strat_train = train_labels_df.iloc[train_index]
-    X_strat_val = prepared_train_values_df[val_index]
-    y_strat_val = train_labels_df.iloc[val_index]
-y_strat_train, y_strat_val = y_strat_train.iloc[:, 0], y_strat_val.iloc[:, 0]  # type: ignore
-
-# generating training and test data sets
-# X_train, X_test, y_train, y_test = train_test_split(prepared_train_values_df, train_labels_df,
-#                                                     test_size=0.3, random_state=42)
-# y_train, y_test = y_train.iloc[:, 0], y_test.iloc[:, 0]
+X_strat_train, y_strat_train, X_strat_val, y_strat_val = \
+    stratified_shuffle_data_split(prepared_train_values, train_labels_df)
 
 # grid search setup on XGBClassifier
 xgb_clf = XGBClassifier(n_jobs=-1, verbosity=1, tree_method='hist')

@@ -1,7 +1,7 @@
 # /usr/bin/env python
 
 from helper_funcs.data_preparation import create_dataframes, prepare_data, \
-    feature_pipeline, train_val_upsampling_split, stratified_shuffle_data_split
+    feature_pipeline, stratified_shuffle_data_split  # train_val_upsampling_split
 from helper_funcs.funcs import clf_func, run_clf
 from sklearn.linear_model import LogisticRegression
 from xgboost import XGBClassifier
@@ -35,13 +35,13 @@ print(f'y_strat_val.value_counts()/len(y_strat_val):\n\
 {y_strat_val.value_counts()/len(y_strat_val)}\n')  # type: ignore
 
 # generating up-sampled training and validation data sets from sparse matrices
-X_train, X_val, y_train, y_val = train_val_upsampling_split(
-    prepared_train_values, train_labels_df, upsampling=True)
+# X_train, X_val, y_train, y_val = train_val_upsampling_split(
+#     prepared_train_values, train_labels_df, upsampling=True)
 
-print(f'y_train.value_counts()/len(y_train):\n\
-{y_train.value_counts()/len(y_train)}\n')
-print(f'train_labels_df.value_counts()/len(train_labels_df):\n\
-{train_labels_df.value_counts()/len(train_labels_df)}\n')
+# print(f'y_train.value_counts()/len(y_train):\n\
+# {y_train.value_counts()/len(y_train)}\n')
+# print(f'train_labels_df.value_counts()/len(train_labels_df):\n\
+# {train_labels_df.value_counts()/len(train_labels_df)}\n')
 
 # classifiers employed for training
 classifier_dict = {'lr_clf': LogisticRegression(random_state=42, n_jobs=-1, max_iter=1e4),
@@ -52,5 +52,5 @@ classifier_dict = {'lr_clf': LogisticRegression(random_state=42, n_jobs=-1, max_
 clf_list = clf_func(classifier_dict)
 
 # runs actual training on classifiers and outputs results to screen
-run_clf(X_train, X_val, y_train, y_val, clf_list, model_dir)
-# run_clf(X_strat_train, X_strat_val, y_strat_train, y_strat_val, clf_list, model_dir)  # type: ignore
+# run_clf(X_train, X_val, y_train, y_val, clf_list, model_dir)
+run_clf(X_strat_train, X_strat_val, y_strat_train, y_strat_val, clf_list, model_dir)  # type: ignore
