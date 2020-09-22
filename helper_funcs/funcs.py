@@ -65,9 +65,9 @@ def grid_search_func(X_train, y_train, grid_search, joblib_file):
 
 def grid_results(grid_search, num):
     cvres = grid_search.cv_results_
-    best_fit_models = [(sqrt(-mean_score), params) for mean_score,
+    best_fit_models = [(sqrt(mean_score), params) for mean_score,
                        params in zip(cvres['mean_test_score'], cvres['params'])]
-    best_fit_models.sort(key=lambda x: x[0], reverse=False)
-    print('List of best-fit models sorted by RMSE:')
+    best_fit_models.sort(key=lambda x: x[0], reverse=True)
+    print('List of best-fit models sorted by micro F1 score:')
     for rmse, params in best_fit_models[:num]:
         print(f'{rmse} {params}')

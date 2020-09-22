@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
-import os
-from pandas import read_csv
 from pathlib import Path, PurePath
 from helper_funcs.funcs import grid_search_func, grid_results, print_accuracy
-from helper_funcs.data_preparation import prepare_data, feature_pipeline, stratified_shuffle_data_split
+from helper_funcs.data_preparation import create_dataframes, prepare_data, feature_pipeline, \
+    stratified_shuffle_data_split
 from sklearn.model_selection import GridSearchCV
 from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, f1_score
@@ -12,38 +11,30 @@ from joblib import load
 from numpy import prod
 # from sklearn.ensemble import VotingClassifier
 
-home = os.environ['HOME']
-project_root_dir = Path(home) / 'Programming/Python/driven-data/predicting-earthquake-damage'
-plot_dir = project_root_dir / 'exploratory_data_analysis/plots'
-data_dir = project_root_dir / 'data'
-train_labels_file = data_dir / 'train_labels.csv'
-train_labels_df = read_csv(train_labels_file, index_col='building_id')
-
 data_dir = Path('./data')
 model_dir = Path('./models')
 
-# data frame creation
-data_frame_list = []
+# create dataframes from csv files
 data_file_list = ['train_values.csv', 'test_values.csv', 'train_labels.csv']
-for data_file in data_file_list:
-    data_frame_list.append(read_csv(data_dir / data_file, index_col='building_id'))
-train_values_df, test_values_df, train_labels_df = data_frame_list
+train_values_df, test_values_df, train_labels_df = create_dataframes(
+    data_file_list, data_dir)
 
-# convert object and numerical data types in train_values_df, test_values_df to category data types
-train_values_df, train_labels_df, test_values_df, num_attrib, \
-    cat_attrib = prepare_data(train_values_df, test_values_df, train_labels_df)
+# convert object data types to category data types,
+# numerical data types from int64 to int 32
+train_values_df, train_labels_df, test_values_df, num_attrib, cat_attrib = \
+    prepare_data(train_values_df, test_values_df, train_labels_df)
 
 # pipeline to place median for NaNs and normalize data
 prepared_train_values = feature_pipeline(train_values_df, num_attrib, cat_attrib)
 
-# generating stratified training and validation data sets
+# generating stratified training and validation data sets from sparse matrices
 X_strat_train, y_strat_train, X_strat_val, y_strat_val = \
     stratified_shuffle_data_split(prepared_train_values, train_labels_df)
 
 # grid search setup on XGBClassifier
 xgb_clf = XGBClassifier(n_jobs=-1, verbosity=1, tree_method='hist')
 xgb_params = {'max_depth': [10, 15, 20], 'n_estimators': [100, 200]}
-xgb_grid_search = GridSearchCV(xgb_clf, xgb_params, cv=5, scoring='neg_mean_squared_error',
+xgb_grid_search = GridSearchCV(xgb_clf, xgb_params, cv=3, scoring='f1_micro',
                                return_train_score=True, n_jobs=-1, verbose=1)
 
 # grid search computation
