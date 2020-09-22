@@ -38,7 +38,7 @@ xgb_clf = XGBClassifier(n_jobs=-1, verbosity=1, tree_method='hist')
 xgb_params = {'colsample_bytree': uniform(0.7, 0.3),
               'gamma': uniform(0, 0.5),
               'learning_rate': uniform(0.003, 0.3),
-              'max_depth': randint(5, 25),  # xgb_grid_search best fit parameter: 15
+              'max_depth': randint(5, 20),  # xgb_grid_search best fit parameter: 15
               'n_estimators': randint(100, 200),  # xgb_grid_search best fit parameter: 200
               'subsample': uniform(0.6, 0.4)}
 
