@@ -3,7 +3,7 @@
 from pathlib import Path, PurePath
 from helper_funcs.funcs import grid_search_func, grid_results, print_accuracy
 from helper_funcs.data_preparation import create_dataframes, prepare_data, \
-    feature_pipeline, stratified_shuffle_data_split
+    num_feature_pipeline, stratified_shuffle_data_split, target_encode_multiclass
 from sklearn.model_selection import RandomizedSearchCV
 from scipy.stats import uniform, randint
 from xgboost import XGBClassifier
@@ -24,8 +24,12 @@ train_values_df, test_values_df, train_labels_df = create_dataframes(
 train_values_df, train_labels_df, test_values_df, num_attrib, cat_attrib = \
     prepare_data(train_values_df, test_values_df, train_labels_df)
 
+# one-hot encode categorical columns and create mean-target encoding columns in dataframe
+train_values_df = target_encode_multiclass(train_values_df, train_labels_df)
+
 # pipeline to place median for NaNs and normalize data
-prepared_train_values = feature_pipeline(train_values_df, num_attrib, cat_attrib)
+# prepared_train_values = feature_pipeline(train_values_df, num_attrib, cat_attrib)
+prepared_train_values = num_feature_pipeline(train_values_df)
 
 # generating stratified training and validation data sets from sparse matrices
 X_strat_train, y_strat_train, X_strat_val, y_strat_val = \
@@ -64,7 +68,7 @@ print(f'Accuracy for the best-fit model: {best_fit_acc_score:.8f}')
 
 # accuracy improvement
 new_accuracy_score = best_fit_acc_score
-model_clf = load(PurePath.joinpath(model_dir, '19-09-2020/02/xgb_clf.sav'))
+model_clf = load(PurePath.joinpath(model_dir, '23-09-2020/01/xgb_clf.sav'))
 old_accuracy_score = print_accuracy(model_clf, X_strat_val, y_strat_val)  # type: ignore
 print(f'''Percentage change: {round((100*(new_accuracy_score)/old_accuracy_score)-100, 3)}%.''')
 

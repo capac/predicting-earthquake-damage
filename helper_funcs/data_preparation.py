@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 
-from pandas import read_csv, Series
+from pandas import read_csv, Series, concat
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from scipy.sparse import hstack, csr_matrix, vstack
 import numpy as np
 from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.utils import resample
+from category_encoders import OneHotEncoder, TargetEncoder
 
 
 # return list of dataframes, which can be tuple-unpacked
@@ -108,8 +109,32 @@ def feature_pipeline(train_values_df, num_attrib, cat_attrib):
     num_pipeline = Pipeline([('imputer', SimpleImputer(
         strategy='median')), ('std_scaler', StandardScaler())])
     full_pipeline = ColumnTransformer([('num', num_pipeline, num_attrib),
-                                       ('cat', OneHotEncoder(), cat_attrib),
+                                      #  ('cat', OneHotEncoder(), cat_attrib),
                                        ], n_jobs=-1)
     prepared_train_values = full_pipeline.fit_transform(train_values_df)
     # print(f'prepared_train_values.shape: {prepared_train_values.shape}')
     return prepared_train_values
+
+
+# pipeline to place median for NaNs and normalize data
+def num_feature_pipeline(train_values_df):
+    num_pipeline = Pipeline([('imputer', SimpleImputer(
+        strategy='median')), ('std_scaler', StandardScaler())])
+    prepared_train_values = num_pipeline.fit_transform(train_values_df)
+    # print(f'prepared_train_values.shape: {prepared_train_values.shape}')
+    return prepared_train_values
+
+# one-hot encode categorical columns and create mean-target encoding columns in dataframe
+def target_encode_multiclass(train_values_df, train_labels_df):
+    onehot_enc = OneHotEncoder()
+    train_labels_onehot_df = onehot_enc.fit_transform(train_labels_df)
+    class_names = train_labels_onehot_df.columns
+    train_values_cat_df = train_values_df.select_dtypes('category')
+    train_values_num_df = train_values_df.select_dtypes(exclude='category')
+    for class_name in class_names:
+        enc = TargetEncoder()
+        enc.fit(train_values_cat_df, train_labels_onehot_df[class_name])
+        temp_df = enc.transform(train_values_cat_df)
+        temp_df.columns = [str(col)+'_'+str(class_name) for col in temp_df.columns]
+        train_values_num_df = concat([train_values_num_df, temp_df], axis=1)
+    return train_values_num_df
