@@ -32,7 +32,7 @@ X_strat_train, y_strat_train, X_strat_val, y_strat_val = \
     stratified_shuffle_data_split(prepared_train_values, train_labels_df)
 
 # grid search setup on XGBClassifier
-xgb_clf = XGBClassifier(n_jobs=-1, verbosity=1, tree_method='hist')
+xgb_clf = XGBClassifier(n_jobs=-1, verbosity=1, tree_method='auto')
 # xgb_params = {'max_depth': [10, 15, 20], 'n_estimators': [100, 200]}
 
 xgb_params = {'colsample_bytree': uniform(0.7, 0.3),
@@ -43,7 +43,7 @@ xgb_params = {'colsample_bytree': uniform(0.7, 0.3),
               'subsample': uniform(0.6, 0.4)}
 
 xgb_grid_search = RandomizedSearchCV(xgb_clf, param_distributions=xgb_params, random_state=42,
-                                     n_iter=10, cv=5, verbose=1, n_jobs=-1, return_train_score=True,
+                                     n_iter=4, cv=3, verbose=1, n_jobs=-1, return_train_score=True,
                                      scoring='f1_micro')
 
 # xgb_grid_search = GridSearchCV(xgb_clf, xgb_params, cv=3, scoring='neg_mean_squared_error',
