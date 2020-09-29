@@ -9,7 +9,6 @@ from scipy.stats import uniform, randint
 from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, f1_score
 from joblib import load
-# from sklearn.ensemble import VotingClassifier
 
 data_dir = Path('./data')
 model_dir = Path('./models')
