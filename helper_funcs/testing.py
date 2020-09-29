@@ -78,8 +78,8 @@ def target_encode_multiclass(train_values_df, train_labels_df, test_values_df=No
         return num_train_values_df
 
 
-# pipeline to place median for NaNs and normalize data
-def multiclass_pipeline(classifier, X_strat_train, y_strat_train, X_strat_val, y_strat_val, num_attrib, cat_attrib):
+# multi-category encoder function to test category functions in category_encoders with earthquake data
+def test_category_encoders(classifier, X_strat_train, y_strat_train, X_strat_val, y_strat_val, num_attrib, cat_attrib):
     encoder_list = [
                     ce.backward_difference.BackwardDifferenceEncoder,
                     ce.basen.BaseNEncoder,
