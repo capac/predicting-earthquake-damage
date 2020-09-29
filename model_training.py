@@ -1,11 +1,13 @@
 # /usr/bin/env python
 
 from helper_funcs.data_preparation import create_dataframes, prepare_data, \
-    num_feature_pipeline, stratified_shuffle_data_split, target_encode_multiclass
+    stratified_shuffle_data_split, feature_pipeline
 from helper_funcs.funcs import clf_func, run_clf
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
-from pathlib import Path
+from pathlib import Path  # PurePath
+# from joblib import load
 
 
 # directory paths
@@ -17,55 +19,31 @@ data_file_list = ['train_values.csv', 'test_values.csv', 'train_labels.csv']
 train_values_df, test_values_df, train_labels_df = create_dataframes(
     data_file_list, data_dir)
 
-# convert object data types to category data types,
-# numerical data types from int64 to int 32
+# convert object data types to category data types, numerical data types from int64 to int 32
 train_values_df, train_labels_df, test_values_df, num_attrib, cat_attrib = \
     prepare_data(train_values_df, test_values_df, train_labels_df)
 
-print(f'train_values_df.shape: {train_values_df.shape}')
-
-# one-hot encode categorical columns and create mean-target encoding columns in dataframe
-train_values_df = target_encode_multiclass(train_values_df, train_labels_df)
-
-print(f'train_values_df.shape: {train_values_df.shape}')
-# print(f'train_values_df.columns: {train_values_df.columns}')
-
 # pipeline to place median for NaNs and normalize data
-# prepared_train_values = feature_pipeline(train_values_df, num_attrib, cat_attrib)
-prepared_train_values = num_feature_pipeline(train_values_df)
-
-print(f'type(prepared_train_values): {type(prepared_train_values)}')
-print(f'prepared_train_values.shape: {prepared_train_values.shape}')
-# print(f'train_values_df.head(3): {train_values_df.head(3)}')
+prepared_X_train_values = feature_pipeline(train_values_df, num_attrib, cat_attrib)
+prepared_X_test_values = feature_pipeline(test_values_df, num_attrib, cat_attrib)
 
 # generating stratified training and validation data sets from sparse matrices
-X_strat_train, y_strat_train, X_strat_val, y_strat_val = \
-    stratified_shuffle_data_split(prepared_train_values, train_labels_df)
-
-print(f'y_strat_train.value_counts()/len(y_strat_train):\n\
-{y_strat_train.value_counts()/len(y_strat_train)}\n')  # type: ignore
-print(f'y_strat_val.value_counts()/len(y_strat_val):\n\
-{y_strat_val.value_counts()/len(y_strat_val)}\n')  # type: ignore
-
-print(f'X_strat_train.shape: {X_strat_train.shape}')
-
-# generating up-sampled training and validation data sets from sparse matrices
-# X_train, X_val, y_train, y_val = train_val_upsampling_split(
-#     prepared_train_values, train_labels_df, upsampling=True)
-
-# print(f'y_train.value_counts()/len(y_train):\n\
-# {y_train.value_counts()/len(y_train)}\n')
-# print(f'train_labels_df.value_counts()/len(train_labels_df):\n\
-# {train_labels_df.value_counts()/len(train_labels_df)}\n')
+prepared_X_strat_train, y_strat_train_df, prepared_X_strat_val, y_strat_val_df = \
+    stratified_shuffle_data_split(prepared_X_train_values, train_labels_df)
 
 # classifiers employed for training
-classifier_dict = {'lr_clf': LogisticRegression(random_state=42, n_jobs=-1, max_iter=1e4),
-                   'xgb_clf': XGBClassifier(n_jobs=-1, verbosity=1, max_depth=8, tree_method='auto'),
+classifier_dict = {'xgb_clf': XGBClassifier(tree_method='auto', n_jobs=-1, verbosity=1, max_depth=8),
+                   'lr_clf': LogisticRegression(random_state=42, n_jobs=-1, max_iter=1e4),
+                   'rf_clf': RandomForestClassifier(n_estimators=500),
                    }
 
 # creates list of named classifier tuples for training
 clf_list = clf_func(classifier_dict)
 
 # runs actual training on classifiers and outputs results to screen
-# run_clf(X_train, X_val, y_train, y_val, clf_list, model_dir)
-run_clf(X_strat_train, X_strat_val, y_strat_train, y_strat_val, clf_list, model_dir)  # type: ignore
+run_clf(prepared_X_strat_train, prepared_X_strat_val, y_strat_train_df, y_strat_val_df, clf_list, model_dir)
+
+# save predicted results from test data for DrivenData competition
+# model_clf = load(PurePath.joinpath(model_dir, '23-09-2020/01/xgb_grid_search.sav'))
+# predicted_y_results = model_clf.predict(prepared_test_values)
+# print(f'type(predicted_y_results): {type(predicted_y_results)}')

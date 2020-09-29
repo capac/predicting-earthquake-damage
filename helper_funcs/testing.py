@@ -45,10 +45,10 @@ def train_val_upsampling_split(train_values_df, train_labels_df, upsampling=Fals
         X_train = vstack(mat_x_list)
         y_train = Series(np.concatenate(mat_y_list, axis=0).ravel())
         y_val = y_val.iloc[:, 0]
-    # print(f'X_train.shape: {X_train.shape}')
-    # print(f'y_train.shape: {y_train.shape}')
-    # print(f'X_val.shape: {X_val.shape}')
-    # print(f'y_val.shape: {y_val.shape}\n')
+    print(f'X_train.shape: {X_train.shape}')
+    print(f'y_train.shape: {y_train.shape}')
+    print(f'X_val.shape: {X_val.shape}')
+    print(f'y_val.shape: {y_val.shape}\n')
     return X_train, X_val, y_train, y_val
 
 
