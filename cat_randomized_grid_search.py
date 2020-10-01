@@ -3,7 +3,7 @@
 from pathlib import Path, PurePath
 from helper_funcs.funcs import grid_search_func, grid_results, print_accuracy
 from helper_funcs.data_preparation import create_dataframes, prepare_data, \
-    feature_pipeline, stratified_shuffle_data_split, target_encode_multiclass
+    feature_pipeline, stratified_shuffle_data_split
 from sklearn.model_selection import RandomizedSearchCV
 from scipy.stats import uniform, randint
 from catboost import CatBoostClassifier
@@ -23,12 +23,8 @@ train_values_df, test_values_df, train_labels_df = create_dataframes(
 train_values_df, train_labels_df, test_values_df, num_attrib, cat_attrib = \
     prepare_data(train_values_df, test_values_df, train_labels_df)
 
-# one-hot encode categorical columns and create mean-target encoding columns in dataframe
-train_values_df = target_encode_multiclass(train_values_df, train_labels_df)
-
 # pipeline to place median for NaNs and normalize data
-# prepared_train_values = feature_pipeline(train_values_df, num_attrib, cat_attrib)
-prepared_train_values = feature_pipeline(train_values_df)
+prepared_train_values = feature_pipeline(train_values_df, num_attrib, cat_attrib)
 
 # generating stratified training and validation data sets from sparse matrices
 X_strat_train, y_strat_train, X_strat_val, y_strat_val = \
@@ -37,7 +33,7 @@ X_strat_train, y_strat_train, X_strat_val, y_strat_val = \
 # grid search setup on XGBClassifier
 cat_clf = CatBoostClassifier()
 
-cat_params = {'learning_rate': uniform(0.4, 0.8), 'n_iterations': randint(2e3, 3e3)}
+cat_params = {'learning_rate': uniform(0.4, 0.8), 'iterations': randint(2e3, 3e3)}
 
 cat_grid_search = RandomizedSearchCV(cat_clf, param_distributions=cat_params, random_state=42,
                                      n_iter=4, cv=3, verbose=100, n_jobs=-1, return_train_score=True,
