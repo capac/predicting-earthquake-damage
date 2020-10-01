@@ -3,8 +3,9 @@
 from helper_funcs.data_preparation import create_dataframes, prepare_data, \
     stratified_shuffle_data_split, feature_pipeline
 from helper_funcs.funcs import clf_func, run_clf
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+# from sklearn.linear_model import LogisticRegression
+# from sklearn.ensemble import RandomForestClassifier
+from catboost import CatBoostClassifier
 from xgboost import XGBClassifier
 from pathlib import Path  # PurePath
 # from joblib import load
@@ -32,9 +33,15 @@ prepared_X_strat_train, y_strat_train_df, prepared_X_strat_val, y_strat_val_df =
     stratified_shuffle_data_split(prepared_X_train_values, train_labels_df)
 
 # classifiers employed for training
-classifier_dict = {'xgb_clf': XGBClassifier(tree_method='auto', n_jobs=-1, verbosity=1, max_depth=8),
-                   'lr_clf': LogisticRegression(random_state=42, n_jobs=-1, max_iter=1e4),
-                   'rf_clf': RandomForestClassifier(n_estimators=500),
+classifier_dict = {
+                   'xgb_clf': XGBClassifier(tree_method='auto', n_jobs=-1, verbosity=1, max_depth=8),
+                   #  'lr_clf': LogisticRegression(random_state=42, n_jobs=-1, max_iter=1e4),
+                   #  'rf_clf': RandomForestClassifier(n_estimators=500),
+                   'cat_clf': CatBoostClassifier(iterations=2e3,
+                                                 learning_rate=0.9,
+                                                 loss_function='MultiClass',
+                                                 custom_metric=['Accuracy', 'AUC', 'TotalF1'],
+                                                 verbose=100)
                    }
 
 # creates list of named classifier tuples for training
