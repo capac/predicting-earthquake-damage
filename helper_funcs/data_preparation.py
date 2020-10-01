@@ -6,9 +6,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.preprocessing import StandardScaler
 from sklearn.compose import ColumnTransformer
-from category_encoders.binary import BinaryEncoder
-# from category_encoders.ordinal import OrdinalEncoder
-# from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder
 
 
 # return list of dataframes, which can be tuple-unpacked
@@ -33,7 +31,7 @@ def prepare_data(train_values_df, test_values_df, train_labels_df):
         df[other_objects] = df[other_objects].astype('category')
         filter_ = train_values_df.filter(regex='geo_level_').columns
         df[filter_] = df[filter_].astype('category')
-        # df.drop(geo_list, axis=1, inplace=True)
+        # df.drop('count_floors_pre_eq', axis=1, inplace=True)
 
     # list of categorical and numerical data type, necessary for ML pipeline
     # DEFINED BEFORE MERGING train_values_df AND train_labels_df
@@ -60,7 +58,7 @@ def feature_pipeline(train_values_df, num_attrib, cat_attrib):
     num_pipeline = Pipeline([('imputer', SimpleImputer(
         strategy='median')), ('std_scaler', StandardScaler())])
     full_pipeline = ColumnTransformer([('num', num_pipeline, num_attrib),
-                                       ('cat', BinaryEncoder(), cat_attrib),
+                                       ('cat', OneHotEncoder(), cat_attrib),
                                        ], n_jobs=-1)
     prepared_train_values = full_pipeline.fit_transform(train_values_df)
     # print datframe shapes
