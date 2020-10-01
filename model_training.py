@@ -38,7 +38,7 @@ classifier_dict = {
                    #  'lr_clf': LogisticRegression(random_state=42, n_jobs=-1, max_iter=1e4),
                    #  'rf_clf': RandomForestClassifier(n_estimators=500),
                    'cat_clf': CatBoostClassifier(iterations=2e3,
-                                                 learning_rate=0.9,
+                                                 learning_rate=0.6,
                                                  loss_function='MultiClass',
                                                  custom_metric=['Accuracy', 'AUC', 'TotalF1'],
                                                  verbose=100)

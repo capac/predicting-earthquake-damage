@@ -27,11 +27,13 @@ def prepare_data(train_values_df, test_values_df, train_labels_df):
                      'ground_floor_type', 'other_floor_type', 'position',
                      'plan_configuration', 'legal_ownership_status']
     # geo_list = ['geo_level_2_id', 'geo_level_3_id']  # testing on subset of geographic regions
+    reg_list = ['geo_level_', 'has_']
     for df in all_values_df:
         df[other_objects] = df[other_objects].astype('category')
-        filter_ = train_values_df.filter(regex='geo_level_').columns
-        df[filter_] = df[filter_].astype('category')
-        # df.drop('count_floors_pre_eq', axis=1, inplace=True)
+        for reg in reg_list:
+            filter_ = train_values_df.filter(regex=reg).columns
+            df[filter_] = df[filter_].astype('category')
+            # df.drop('count_floors_pre_eq', axis=1, inplace=True)
 
     # list of categorical and numerical data type, necessary for ML pipeline
     # DEFINED BEFORE MERGING train_values_df AND train_labels_df
