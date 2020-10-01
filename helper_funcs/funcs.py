@@ -2,7 +2,7 @@
 
 from pathlib import PurePath
 from joblib import dump, load
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, classification_report, f1_score
 from collections import namedtuple
 from time import time
 import sys
@@ -21,9 +21,11 @@ def print_accuracy(model_clf, X_val, y_val, start_time=None, print_output=False)
     # NOTICE: returns valid time differences only if start_time != None
     y_pred = model_clf.predict(X_val)
     acc_score = accuracy_score(y_pred, y_val)
+    micro_averaged_f1_score = f1_score(y_val, y_pred, average='micro')
     #  only prints if print_output=True
     if print_output:
         sys.stdout.write(f'\nAccuracy score for {model_clf.__class__.__name__}: {acc_score:.8f}')
+        sys.stdout.write(f'\nMicro-averaged F1 score for {model_clf.__class__.__name__}: {micro_averaged_f1_score:.8f}')
         sys.stdout.write(f'\nTime elapsed: {time() - start_time:.4f} sec')
         sys.stdout.write(f'\nClassification report:\n{classification_report(y_pred, y_val, digits=4)}')
     return acc_score
