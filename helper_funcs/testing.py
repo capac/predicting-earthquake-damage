@@ -59,6 +59,9 @@ def target_encode_multiclass(train_values_df, train_labels_df, test_values_df=No
     class_names = train_labels_onehot_df.columns
     cat_train_values_df = train_values_df.select_dtypes('category')
     num_train_values_df = train_values_df.select_dtypes(exclude='category')
+    num_pipeline = Pipeline([('imputer', SimpleImputer(strategy='median')),
+                             ('std_scaler', StandardScaler())])
+    num_train_values_df = num_pipeline.fit_transform(num_train_values_df)
     if test_values_df:
         cat_test_values_df = test_values_df.select_dtypes('category')
         num_test_values_df = test_values_df.select_dtypes(exclude='category')
