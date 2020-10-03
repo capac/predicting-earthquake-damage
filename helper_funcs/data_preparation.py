@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from pandas import read_csv
+from pandas.core.frame import DataFrame
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -73,9 +74,13 @@ def feature_pipeline(train_values_df, num_attrib, cat_attrib):
 def stratified_shuffle_data_split(prepared_train_values, train_labels_df):
     sss = StratifiedShuffleSplit(n_splits=1, test_size=0.3, random_state=42)
     for train_index, val_index in sss.split(prepared_train_values, train_labels_df):
-        prepared_X_strat_train = prepared_train_values[train_index]
+        if isinstance(prepared_train_values, DataFrame):
+            prepared_X_strat_train = prepared_train_values.iloc[train_index]
+            prepared_X_strat_val = prepared_train_values.iloc[val_index]
+        else:
+            prepared_X_strat_train = prepared_train_values[train_index]
+            prepared_X_strat_val = prepared_train_values[val_index]
         y_strat_train_df = train_labels_df.iloc[train_index]
-        prepared_X_strat_val = prepared_train_values[val_index]
         y_strat_val_df = train_labels_df.iloc[val_index]
     y_strat_train_df, y_strat_val_df = y_strat_train_df.iloc[:, 0], y_strat_val_df.iloc[:, 0]  # type: ignore
     print(f'prepared_X_strat_train.shape: {prepared_X_strat_train.shape}')  # type: ignore

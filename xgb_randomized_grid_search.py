@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 
 from pathlib import Path, PurePath
-from helper_funcs.funcs import grid_search_func, grid_results, print_accuracy
+from helper_funcs.clf_funcs import grid_search_func, grid_results, print_accuracy
 from helper_funcs.data_preparation import create_dataframes, prepare_data, \
-    num_feature_pipeline, stratified_shuffle_data_split, target_encode_multiclass
+    stratified_shuffle_data_split
+from helper_funcs.exploratory import target_encode_multiclass
 from sklearn.model_selection import RandomizedSearchCV
 from scipy.stats import uniform, randint
 from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, f1_score
 from joblib import load
+from pandas import DataFrame
 
 data_dir = Path('./data')
 model_dir = Path('./models')
@@ -24,15 +26,15 @@ train_values_df, train_labels_df, test_values_df, num_attrib, cat_attrib = \
     prepare_data(train_values_df, test_values_df, train_labels_df)
 
 # one-hot encode categorical columns and create mean-target encoding columns in dataframe
-train_values_df = target_encode_multiclass(train_values_df, train_labels_df)
+prepared_X_train_values, prepared_test_values = \
+    target_encode_multiclass(train_values_df, train_labels_df, test_values_df)
 
 # pipeline to place median for NaNs and normalize data
 # prepared_train_values = feature_pipeline(train_values_df, num_attrib, cat_attrib)
-prepared_train_values = num_feature_pipeline(train_values_df)
 
 # generating stratified training and validation data sets from sparse matrices
-X_strat_train, y_strat_train, X_strat_val, y_strat_val = \
-    stratified_shuffle_data_split(prepared_train_values, train_labels_df)
+prepared_X_strat_train, y_strat_train_df, prepared_X_strat_val, y_strat_val_df = \
+    stratified_shuffle_data_split(prepared_X_train_values, train_labels_df)
 
 # grid search setup on XGBClassifier
 xgb_clf = XGBClassifier(n_jobs=-1, verbosity=1, tree_method='auto')
@@ -46,7 +48,7 @@ xgb_params = {'colsample_bytree': uniform(0.7, 0.3),
               'subsample': uniform(0.6, 0.4)}
 
 xgb_grid_search = RandomizedSearchCV(xgb_clf, param_distributions=xgb_params, random_state=42,
-                                     n_iter=4, cv=3, verbose=1, n_jobs=-1, return_train_score=True,
+                                     n_iter=8, cv=5, verbose=1, n_jobs=-1, return_train_score=True,
                                      scoring='f1_micro')
 
 # xgb_grid_search = GridSearchCV(xgb_clf, xgb_params, cv=3, scoring='neg_mean_squared_error',
@@ -54,22 +56,31 @@ xgb_grid_search = RandomizedSearchCV(xgb_clf, param_distributions=xgb_params, ra
 
 # grid search computation
 xgb_joblib_file = PurePath.joinpath(model_dir, 'xgb_grid_search.sav')
-xgb_grid_search_output = grid_search_func(X_strat_train, y_strat_train,  # type: ignore
+xgb_grid_search_output = grid_search_func(prepared_X_strat_train, y_strat_train_df,
                                           xgb_grid_search, xgb_joblib_file)  # type: ignore
 
 # output list of RSME in decreasing order
 grid_results(xgb_grid_search_output, 8)
 
 # accuracy performance metric
-y_pred = xgb_grid_search_output.predict(X_strat_val)  # type: ignore
-best_fit_acc_score = accuracy_score(y_strat_val, y_pred)  # type: ignore
+y_pred = xgb_grid_search_output.predict(prepared_X_strat_val)  # type: ignore
+best_fit_acc_score = accuracy_score(y_strat_val_df, y_pred)  # type: ignore
 print(f'Accuracy for the best-fit model: {best_fit_acc_score:.8f}')
 
 # accuracy improvement
 new_accuracy_score = best_fit_acc_score
-model_clf = load(PurePath.joinpath(model_dir, '23-09-2020/01/xgb_clf.sav'))
-old_accuracy_score = print_accuracy(model_clf, X_strat_val, y_strat_val)  # type: ignore
+model_clf = load(PurePath.joinpath(model_dir, '01-10-2020/05/xgb_clf.sav'))
+old_accuracy_score = print_accuracy(model_clf, prepared_X_strat_val, y_strat_val_df)  # type: ignore
 print(f'''Percentage change: {round((100*(new_accuracy_score)/old_accuracy_score)-100, 3)}%.''')
 
 # performance metric for DrivenData competition
-print(f'''Micro-averaged F1 score: {f1_score(y_strat_val, y_pred, average='micro'):.8f}''')
+print(f'''Micro-averaged F1 score: {f1_score(y_strat_val_df, y_pred, average='micro'):.8f}''')
+
+# save predicted results from test data for DrivenData competition
+model_clf = load(PurePath.joinpath(model_dir, 'xgb_grid_search.sav'))
+predicted_y_results = model_clf.predict(prepared_test_values)
+print(f'type(predicted_y_results): {type(predicted_y_results)}')
+print(f'predicted_y_results.shape: {predicted_y_results.shape}')
+print(f'predicted_y_results[:10]: {predicted_y_results[:10]}')
+predicted_y_results_s = DataFrame(predicted_y_results, index=test_values_df.index, columns=['damage_grade'])
+predicted_y_results_s.to_csv('predicted_results.csv')

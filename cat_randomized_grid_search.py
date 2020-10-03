@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from pathlib import Path, PurePath
-from helper_funcs.funcs import grid_search_func, grid_results, print_accuracy
+from helper_funcs.clf_funcs import grid_search_func, grid_results, print_accuracy
 from helper_funcs.data_preparation import create_dataframes, prepare_data, \
     feature_pipeline, stratified_shuffle_data_split
 from sklearn.model_selection import RandomizedSearchCV
@@ -9,6 +9,7 @@ from scipy.stats import uniform, randint
 from catboost import CatBoostClassifier
 from sklearn.metrics import accuracy_score, f1_score
 from joblib import load
+from pandas import DataFrame
 
 data_dir = Path('./data')
 model_dir = Path('./models')
@@ -25,6 +26,7 @@ train_values_df, train_labels_df, test_values_df, num_attrib, cat_attrib = \
 
 # pipeline to place median for NaNs and normalize data
 prepared_train_values = feature_pipeline(train_values_df, num_attrib, cat_attrib)
+prepared_test_values = feature_pipeline(test_values_df, num_attrib, cat_attrib)
 
 # generating stratified training and validation data sets from sparse matrices
 X_strat_train, y_strat_train, X_strat_val, y_strat_val = \
@@ -60,3 +62,12 @@ print(f'''Percentage change: {round((100*(new_accuracy_score)/old_accuracy_score
 
 # performance metric for DrivenData competition
 print(f'''Micro-averaged F1 score: {f1_score(y_strat_val, y_pred, average='micro'):.8f}''')
+
+# save predicted results from test data for DrivenData competition
+model_clf = load(PurePath.joinpath(model_dir, '01-10-2020/05/cat_clf.sav'))
+predicted_y_results = model_clf.predict(prepared_test_values)
+print(f'type(predicted_y_results): {type(predicted_y_results)}')
+print(f'predicted_y_results.shape: {predicted_y_results.shape}')
+print(f'predicted_y_results[:10]: {predicted_y_results[:10]}')
+predicted_y_results_s = DataFrame(predicted_y_results, index=test_values_df.index, columns=['damage_grade'])
+predicted_y_results_s.to_csv('predicted_results.csv')

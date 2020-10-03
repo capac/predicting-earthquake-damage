@@ -3,6 +3,7 @@
 import category_encoders as ce
 from pandas import concat, Series
 from time import time
+from pandas.core.frame import DataFrame
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
@@ -61,21 +62,26 @@ def target_encode_multiclass(train_values_df, train_labels_df, test_values_df=No
     num_train_values_df = train_values_df.select_dtypes(exclude='category')
     num_pipeline = Pipeline([('imputer', SimpleImputer(strategy='median')),
                              ('std_scaler', StandardScaler())])
-    num_train_values_df = num_pipeline.fit_transform(num_train_values_df)
-    if test_values_df:
+    num_train_values_arr = num_pipeline.fit_transform(num_train_values_df)
+    num_train_values_df = DataFrame(num_train_values_arr, columns=num_train_values_df.columns,
+                                    index=train_values_df.index)
+    if test_values_df is not None:
         cat_test_values_df = test_values_df.select_dtypes('category')
         num_test_values_df = test_values_df.select_dtypes(exclude='category')
+        num_test_values_arr = num_pipeline.fit_transform(num_test_values_df)
+        num_test_values_df = DataFrame(num_test_values_arr, columns=num_test_values_df.columns,
+                                       index=test_values_df.index)
     for class_name in class_names:
         enc = ce.TargetEncoder()
         enc.fit(cat_train_values_df, train_labels_onehot_df[class_name])
         temp_train_df = enc.transform(cat_train_values_df)
         temp_train_df.columns = [str(col)+'_'+str(class_name) for col in temp_train_df.columns]
         num_train_values_df = concat([num_train_values_df, temp_train_df], axis=1)
-        if test_values_df:
+        if test_values_df is not None:
             temp_test_df = enc.transform(cat_test_values_df)  # type: ignore
             temp_test_df.columns = [str(col)+'_'+str(class_name) for col in temp_test_df.columns]
             num_test_values_df = concat([num_test_values_df, temp_test_df], axis=1)  # type: ignore
-    if test_values_df:
+    if test_values_df is not None:
         return num_train_values_df, num_test_values_df  # type: ignore
     else:
         return num_train_values_df
