@@ -56,7 +56,7 @@ clf_list = clf_func(classifier_dict)
 run_clf(prepared_X_strat_train, prepared_X_strat_val, y_strat_train_df, y_strat_val_df, clf_list, model_dir)
 
 # save predicted results from test data for DrivenData competition
-model_clf = load(PurePath.joinpath(model_dir, 'nbcat_clf.sav'))
+model_clf = load(PurePath.joinpath(model_dir, 'xgb_clf.sav'))
 predicted_y_results = model_clf.predict(prepared_test_values)
 print(f'type(predicted_y_results): {type(predicted_y_results)}')
 print(f'predicted_y_results.shape: {predicted_y_results.shape}')

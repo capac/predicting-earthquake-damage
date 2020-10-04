@@ -42,13 +42,13 @@ xgb_clf = XGBClassifier(n_jobs=-1, verbosity=1, tree_method='auto')
 
 xgb_params = {'colsample_bytree': uniform(0.7, 0.3),
               'gamma': uniform(0, 0.5),
-              'learning_rate': uniform(0.003, 0.3),
+              'learning_rate': uniform(0.03, 0.6),
               'max_depth': randint(5, 20),  # xgb_grid_search best fit parameter: 15
               'n_estimators': randint(100, 200),  # xgb_grid_search best fit parameter: 200
-              'subsample': uniform(0.6, 0.4)}
+              'subsample': uniform(0.7, 0.4)}
 
 xgb_grid_search = RandomizedSearchCV(xgb_clf, param_distributions=xgb_params, random_state=42,
-                                     n_iter=8, cv=5, verbose=1, n_jobs=-1, return_train_score=True,
+                                     n_iter=6, cv=4, verbose=1, n_jobs=-1, return_train_score=True,
                                      scoring='f1_micro')
 
 # xgb_grid_search = GridSearchCV(xgb_clf, xgb_params, cv=3, scoring='neg_mean_squared_error',
