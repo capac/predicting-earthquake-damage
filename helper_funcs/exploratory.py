@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 
 import category_encoders as ce
 from pandas import concat, Series
@@ -72,7 +72,7 @@ def target_encode_multiclass(train_values_df, train_labels_df, test_values_df=No
         num_test_values_df = DataFrame(num_test_values_arr, columns=num_test_values_df.columns,
                                        index=test_values_df.index)
     for class_name in class_names:
-        enc = ce.TargetEncoder()
+        enc = ce.TargetEncoder(min_samples_leaf=10, smoothing=0.1)
         enc.fit(cat_train_values_df, train_labels_onehot_df[class_name])
         temp_train_df = enc.transform(cat_train_values_df)
         temp_train_df.columns = [str(col)+'_'+str(class_name) for col in temp_train_df.columns]
