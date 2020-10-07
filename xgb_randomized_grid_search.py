@@ -13,7 +13,7 @@ from joblib import load
 from pandas import DataFrame
 
 data_dir = Path('./data')
-model_dir = Path('./models')
+model_dir = Path('./models/10-07-2020/')
 
 # create dataframes from csv files
 data_file_list = ['train_values.csv', 'test_values.csv', 'train_labels.csv']
@@ -48,7 +48,7 @@ xgb_params = {'colsample_bytree': uniform(0.7, 0.3),
               'subsample': uniform(0.7, 0.4)}
 
 xgb_grid_search = RandomizedSearchCV(xgb_clf, param_distributions=xgb_params, random_state=42,
-                                     n_iter=6, cv=4, verbose=1, n_jobs=-1, return_train_score=True,
+                                     n_iter=5, cv=3, verbose=1, n_jobs=-1, return_train_score=True,
                                      scoring='f1_micro')
 
 # xgb_grid_search = GridSearchCV(xgb_clf, xgb_params, cv=3, scoring='neg_mean_squared_error',
@@ -57,7 +57,8 @@ xgb_grid_search = RandomizedSearchCV(xgb_clf, param_distributions=xgb_params, ra
 # grid search computation
 xgb_joblib_file = PurePath.joinpath(model_dir, 'xgb_grid_search.sav')
 xgb_grid_search_output = grid_search_func(prepared_X_strat_train, y_strat_train_df,
-                                          xgb_grid_search, xgb_joblib_file)  # type: ignore
+                                          xgb_grid_search, xgb_joblib_file, model_dir,
+                                          prepared_X_strat_val, y_strat_val_df)  # type: ignore
 
 # output list of RSME in decreasing order
 grid_results(xgb_grid_search_output, 8)
@@ -67,9 +68,9 @@ y_pred = xgb_grid_search_output.predict(prepared_X_strat_val)  # type: ignore
 best_fit_acc_score = accuracy_score(y_strat_val_df, y_pred)  # type: ignore
 print(f'Accuracy for the best-fit model: {best_fit_acc_score:.8f}')
 
-# accuracy improvement
+# accuracy improvement over some previous result
 new_accuracy_score = best_fit_acc_score
-model_clf = load(PurePath.joinpath(model_dir, '01-10-2020/05/xgb_clf.sav'))
+model_clf = load(PurePath.joinpath(model_dir, 'xgb_grid_search.sav'))
 old_accuracy_score = print_accuracy(model_clf, prepared_X_strat_val, y_strat_val_df)  # type: ignore
 print(f'''Percentage change: {round((100*(new_accuracy_score)/old_accuracy_score)-100, 3)}%.''')
 

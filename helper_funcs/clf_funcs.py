@@ -4,6 +4,7 @@ from pathlib import PurePath
 from joblib import dump, load
 from sklearn.metrics import accuracy_score, classification_report, f1_score
 from collections import namedtuple
+from helper_funcs.xgb_plots import xgb_clf_eval
 from time import time
 import sys
 from numpy import sqrt
@@ -42,9 +43,18 @@ def run_clf(X_train, X_val, y_train, y_val, clf_list, model_dir):
             model_clf = load(model_file)
             accuracy_score_dict[model_clf.__class__.__name__] =\
                 print_accuracy(model_clf, X_val, y_val, start_time=t1, print_output=True)
+            # only plots if XGBoostClassifier is trained with early_stopping_rounds option
+            if model_clf.__class__.__name__ == 'XGBClassifier':
+                xgb_clf_eval(model_clf, model_dir)
         else:
             t2 = time()
-            item.classifier.fit(X_train, y_train)
+            if item.classifier.__class__.__name__ == 'XGBClassifier':
+                item.classifier.fit(X_train, y_train, eval_set=[(X_train, y_train), (X_val, y_val)],
+                                    early_stopping_rounds=20, eval_metric=['merror', 'mlogloss'],
+                                    verbose=True)
+                xgb_clf_eval(item.classifier, model_dir)
+            else:
+                item.classifier.fit(X_train, y_train)
             dump(item.classifier, model_file)
             accuracy_score_dict[item.classifier.__class__.__name__] =\
                 print_accuracy(item.classifier, X_val, y_val, start_time=t2, print_output=True)
@@ -52,12 +62,20 @@ def run_clf(X_train, X_val, y_train, y_val, clf_list, model_dir):
     return accuracy_score_dict
 
 
-def grid_search_func(X_train, y_train, grid_search, joblib_file):
+def grid_search_func(X_train, y_train, grid_search, joblib_file, model_dir=None, X_val=None, y_val=None):
     t0 = time()
     if joblib_file.is_file():
         grid_search = load(joblib_file)
+        if grid_search.best_estimator_.__class__.__name__ == 'XGBClassifier':
+            xgb_clf_eval(grid_search.best_estimator_, model_dir)
     else:
-        grid_search.fit(X_train, y_train)
+        if grid_search.__class__.__name__ == 'RandomizedSearchCV':
+            grid_search.fit(X_train, y_train, eval_set=[(X_train, y_train), (X_val, y_val)],
+                            early_stopping_rounds=20, eval_metric=['merror', 'mlogloss'],
+                            verbose=True)
+            xgb_clf_eval(grid_search.best_estimator_, model_dir)
+        else:
+            grid_search.fit(X_train, y_train)
         dump(grid_search, joblib_file)
     print(f'Best parameters for grid search: {grid_search.best_params_}\n')
     print(f'Best estimator for grid search: {grid_search.best_estimator_}\n')
