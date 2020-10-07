@@ -1,4 +1,4 @@
-# /usr/bin/env python
+#!/usr/bin/env python
 
 from helper_funcs.data_preparation import create_dataframes, prepare_data, \
     stratified_shuffle_data_split
