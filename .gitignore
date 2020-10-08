@@ -3,5 +3,6 @@
 *.csv
 *.sav
 *.png
+*.zip
 *.txt
 __pycache__/
