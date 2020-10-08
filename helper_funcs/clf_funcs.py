@@ -43,7 +43,7 @@ def run_clf(X_train, X_val, y_train, y_val, clf_list, model_dir):
             model_clf = load(model_file)
             accuracy_score_dict[model_clf.__class__.__name__] =\
                 print_accuracy(model_clf, X_val, y_val, start_time=t1, print_output=True)
-            # only plots if XGBoostClassifier is trained with early_stopping_rounds option
+            # plots only if XGBoostClassifier is trained with early_stopping_rounds option
             if model_clf.__class__.__name__ == 'XGBClassifier':
                 xgb_clf_eval(model_clf, model_dir)
         else:
@@ -55,7 +55,7 @@ def run_clf(X_train, X_val, y_train, y_val, clf_list, model_dir):
                 xgb_clf_eval(item.classifier, model_dir)
             else:
                 item.classifier.fit(X_train, y_train)
-            dump(item.classifier, model_file)
+            dump(item.classifier, model_file, compress=3)
             accuracy_score_dict[item.classifier.__class__.__name__] =\
                 print_accuracy(item.classifier, X_val, y_val, start_time=t2, print_output=True)
     print(f'\nTotal time elasped: {time() - t0:.4f} sec')
@@ -76,7 +76,7 @@ def grid_search_func(X_train, y_train, grid_search, joblib_file, model_dir=None,
             xgb_clf_eval(grid_search.best_estimator_, model_dir)
         else:
             grid_search.fit(X_train, y_train)
-        dump(grid_search, joblib_file)
+        dump(grid_search, joblib_file, compress=3)
     print(f'Best parameters for grid search: {grid_search.best_params_}\n')
     print(f'Best estimator for grid search: {grid_search.best_estimator_}\n')
     print(f'Time elapsed: {time() - t0:.4f} sec')
@@ -91,3 +91,16 @@ def grid_results(grid_search, num):
     print('List of best-fit models sorted by micro F1 score:')
     for rmse, params in best_fit_models[:num]:
         print(f'{rmse} {params}')
+
+
+def run_ensemble_clf(X_train, X_val, y_train, y_val, voting_clf, model_dir):
+    t0 = time()
+    joblib_file = PurePath.joinpath(model_dir, 'voting_clf.sav')
+    if joblib_file.is_file():
+        voting_clf = load(joblib_file)
+    else:
+        voting_clf.fit(X_train, y_train)
+        dump(voting_clf, joblib_file)
+    y_pred = voting_clf.predict(X_val)
+    print(f'''Micro-averaged F1 score for VotingClassifier: {f1_score(y_val, y_pred, average='micro'):.8f}''')
+    print(f'\nTime elapsed: {time() - t0:.4f} sec')
