@@ -4,7 +4,7 @@ from helper_funcs.data_preparation import create_dataframes, prepare_data, \
     stratified_shuffle_data_split
 from helper_funcs.clf_funcs import run_ensemble_clf
 from helper_funcs.exploratory import target_encode_multiclass
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from catboost import CatBoostClassifier
 from xgboost import XGBClassifier
@@ -36,28 +36,37 @@ prepared_X_strat_train, y_strat_train_df, prepared_X_strat_val, y_strat_val_df =
 
 # classifiers employed for training
 classifier_dict = {
-                   'xgb_clf': XGBClassifier(verbose=100, n_jobs=-1),
-                   'lr_clf': LogisticRegression(max_iter=1e3, verbose=100, n_jobs=-1),
-                   'rf_clf': RandomForestClassifier(n_estimators=200, verbose=100, n_jobs=-1),
-                   'cat_clf': CatBoostClassifier(verbose=100),
+                   'xgb_clf': XGBClassifier(),
+                   'lr_clf': LogisticRegression(),
+                   'rf_clf': RandomForestClassifier(),
+                   # removes 'catinfo' directory with model training logs
+                   'cat_clf': CatBoostClassifier(allow_writing_files=False),
+                   # From the SGDClassifier docs: "'modified_huber' is another
+                   # smooth loss that brings tolerance to outliers as well as
+                   # probability estimates", which is required with voting='soft'
+                   # in VotingClassifier.
+                   'sgd_clf': SGDClassifier(loss='modified_huber'),
                    }
 
 # creates list of named classifier tuples for training
 clf_list = [(key, val) for key, val in classifier_dict.items()]
 print(f'clf_list: {clf_list}')
 
-# ensemble model classifier
-voting_clf = VotingClassifier(estimators=clf_list, voting='soft', n_jobs=-1)
+# using voting='soft' from https://github.com/scikit-learn/scikit-learn/issues/15368
+voting_clf = VotingClassifier(estimators=clf_list, voting='soft', n_jobs=-1, verbose=True)
 
 # runs actual training on classifiers and outputs results to screen
 run_ensemble_clf(prepared_X_strat_train, prepared_X_strat_val, y_strat_train_df, y_strat_val_df, voting_clf, model_dir)
 
-# save predicted results from test data for DrivenData competition
+# pure joblib load doesn't work, use open to serialize as raw binary object
 with open(PurePath.joinpath(model_dir, 'voting_clf.sav'), 'rb') as f:
     model_clf = load(f)
 predicted_y_results = model_clf.predict(prepared_test_values)
 print(f'type(predicted_y_results): {type(predicted_y_results)}')
 print(f'predicted_y_results.shape: {predicted_y_results.shape}')
 print(f'predicted_y_results[:10]: {predicted_y_results[:10]}')
-predicted_y_results_s = DataFrame(predicted_y_results, index=test_values_df.index, columns=['damage_grade'])
-predicted_y_results_s.to_csv('predicted_results.csv')
+
+# save predicted results from test data for DrivenData competition
+predicted_y_results_df = DataFrame(predicted_y_results, index=test_values_df.index, columns=['damage_grade'])
+predicted_y_results_df.to_csv('predicted_results.csv')
+print('Done!')

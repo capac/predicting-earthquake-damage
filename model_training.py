@@ -4,8 +4,8 @@ from helper_funcs.data_preparation import create_dataframes, prepare_data, \
     stratified_shuffle_data_split
 from helper_funcs.clf_funcs import clf_func, run_clf
 from helper_funcs.exploratory import target_encode_multiclass
-# from sklearn.linear_model import LogisticRegression
-# from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from catboost import CatBoostClassifier
 from xgboost import XGBClassifier
 from pathlib import Path, PurePath
@@ -39,14 +39,19 @@ prepared_X_strat_train, y_strat_train_df, prepared_X_strat_val, y_strat_val_df =
 
 # classifiers employed for training
 classifier_dict = {
-                   'xgb_clf': XGBClassifier(tree_method='auto', n_jobs=-1, verbosity=1, max_depth=8),
-                   #  'lr_clf': LogisticRegression(random_state=42, n_jobs=-1, max_iter=1e4),
-                   #  'rf_clf': RandomForestClassifier(n_estimators=500),
-                   'cat_clf': CatBoostClassifier(iterations=2e3,
-                                                 learning_rate=0.6,
-                                                 loss_function='MultiClass',
-                                                 custom_metric=['Accuracy', 'AUC', 'TotalF1'],
-                                                 verbose=100),
+                    'xgb_clf': XGBClassifier(tree_method='auto',
+                                             n_jobs=-1,
+                                             verbosity=1,
+                                             max_depth=8),
+                    'lr_clf': LogisticRegression(random_state=42,
+                                                 n_jobs=-1,
+                                                 max_iter=1e4),
+                    'rf_clf': RandomForestClassifier(n_estimators=500),
+                    'cat_clf': CatBoostClassifier(iterations=2e3,
+                                                  learning_rate=0.6,
+                                                  loss_function='MultiClass',
+                                                  custom_metric=['Accuracy', 'AUC', 'TotalF1'],
+                                                  verbose=100),
                    }
 
 # creates list of named classifier tuples for training
@@ -56,7 +61,7 @@ clf_list = clf_func(classifier_dict)
 run_clf(prepared_X_strat_train, prepared_X_strat_val, y_strat_train_df, y_strat_val_df, clf_list, model_dir)
 
 # save predicted results from test data for DrivenData competition
-model_clf = load(PurePath.joinpath(model_dir, 'xgb_clf.sav'))
+model_clf = load(PurePath.joinpath(model_dir, 'sgd_clf.sav'))
 predicted_y_results = model_clf.predict(prepared_test_values)
 print(f'type(predicted_y_results): {type(predicted_y_results)}')
 print(f'predicted_y_results.shape: {predicted_y_results.shape}')
