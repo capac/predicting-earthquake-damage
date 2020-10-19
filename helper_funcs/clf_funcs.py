@@ -2,9 +2,9 @@
 
 from pathlib import PurePath
 from joblib import dump, load
-from sklearn.metrics import accuracy_score, classification_report, f1_score
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, f1_score
 from collections import namedtuple
-from helper_funcs.xgb_plots import xgb_clf_eval
+from helper_funcs.helper_plots import xgb_clf_eval
 from time import time
 import sys
 from numpy import sqrt
@@ -102,5 +102,8 @@ def run_ensemble_clf(X_train, X_val, y_train, y_val, voting_clf, model_dir):
         voting_clf.fit(X_train, y_train)
         dump(voting_clf, joblib_file)
     y_pred = voting_clf.predict(X_val)
-    print(f'''Micro-averaged F1 score for VotingClassifier: {f1_score(y_val, y_pred, average='micro'):.8f}''')
-    print(f'\nTime elapsed: {time() - t0:.4f} sec')
+    sys.stdout.write(f'''\nConfusion matrix:\n{confusion_matrix(y_pred, y_val, normalize='true')}''')
+    sys.stdout.write(f'\nConfusion matrix:\n{confusion_matrix(y_pred, y_val)}')
+    sys.stdout.write(f'\nClassification report:\n{classification_report(y_pred, y_val, digits=4)}')
+    sys.stdout.write(f'''Micro-averaged F1 score: {f1_score(y_val, y_pred, average='micro'):.8f}''')
+    sys.stdout.write(f'\nTime elapsed: {time() - t0:.4f} sec')
