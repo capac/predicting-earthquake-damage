@@ -4,9 +4,7 @@ from helper_funcs.data_preparation import create_dataframes, prepare_data, \
     stratified_shuffle_data_split
 from helper_funcs.clf_funcs import run_ensemble_clf
 from helper_funcs.exploratory import target_encode_multiclass
-from sklearn.linear_model import SGDClassifier  # LogisticRegression
-# from sklearn.multiclass import OneVsRestClassifier
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import SGDClassifier
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from catboost import CatBoostClassifier
 from xgboost import XGBClassifier
@@ -38,21 +36,20 @@ prepared_X_strat_train, y_strat_train_df, prepared_X_strat_val, y_strat_val_df =
 
 # classifiers employed for training
 classifier_dict = {
-                   # 'xgb_clf': XGBClassifier(early_stopping_rounds=20),
+                   #  'xgb_clf': XGBClassifier(early_stopping_rounds=20),
                    'xgb_clf': XGBClassifier(),
-                   # 'lr_clf': OneVsRestClassifier(LogisticRegression(max_iter=1e3)),
-                   # 'rf_clf': RandomForestClassifier(n_estimators=1000, min_impurity_decrease=5),
+                   #  'lr_clf': OneVsRestClassifier(LogisticRegression(max_iter=1e3)),
+                   #  'rf_clf': RandomForestClassifier(n_estimators=1000, min_impurity_decrease=2),
                    'rf_clf': RandomForestClassifier(),
                    # removes 'catinfo' directory with model training logs
-                   # 'cat_clf': CatBoostClassifier(allow_writing_files=False, early_stopping_rounds=20),
+                   #  'cat_clf': CatBoostClassifier(allow_writing_files=False, early_stopping_rounds=20),
                    'cat_clf': CatBoostClassifier(allow_writing_files=False),
                    # From the SGDClassifier docs: "'modified_huber' is another
                    # smooth loss that brings tolerance to outliers as well as
                    # probability estimates", which is required with voting='soft'
                    # in VotingClassifier.
-                   # 'sgd_clf': SGDClassifier(early_stopping=True, loss='modified_huber'),
+                   #  'sgd_clf': SGDClassifier(early_stopping=True, loss='modified_huber'),
                    'sgd_clf': SGDClassifier(loss='modified_huber'),
-                   'knn_clf': KNeighborsClassifier()
                    }
 
 # creates list of named classifier tuples for training
@@ -68,7 +65,7 @@ run_ensemble_clf(prepared_X_strat_train, prepared_X_strat_val, y_strat_train_df,
 with open(PurePath.joinpath(model_dir, 'voting_clf.sav'), 'rb') as f:
     model_clf = load(f)
 predicted_y_results = model_clf.predict(prepared_test_values)
-print(f'type(predicted_y_results): {type(predicted_y_results)}')
+print(f'\ntype(predicted_y_results): {type(predicted_y_results)}')
 print(f'predicted_y_results.shape: {predicted_y_results.shape}')
 print(f'predicted_y_results[:10]: {predicted_y_results[:10]}')
 
