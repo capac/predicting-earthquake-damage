@@ -4,8 +4,11 @@ from helper_funcs.data_preparation import create_dataframes, prepare_data, \
     stratified_shuffle_data_split
 from helper_funcs.clf_funcs import run_ensemble_clf
 from helper_funcs.exploratory import target_encode_multiclass
+from sklearn.ensemble import VotingClassifier
+# from sklearn.multiclass import OneVsRestClassifier
+from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
+# from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import SGDClassifier
-from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from catboost import CatBoostClassifier
 from xgboost import XGBClassifier
 from pathlib import Path, PurePath
@@ -36,20 +39,19 @@ prepared_X_strat_train, y_strat_train_df, prepared_X_strat_val, y_strat_val_df =
 
 # classifiers employed for training
 classifier_dict = {
-                   #  'xgb_clf': XGBClassifier(early_stopping_rounds=20),
-                   'xgb_clf': XGBClassifier(),
-                   #  'lr_clf': OneVsRestClassifier(LogisticRegression(max_iter=1e3)),
-                   #  'rf_clf': RandomForestClassifier(n_estimators=1000, min_impurity_decrease=2),
-                   'rf_clf': RandomForestClassifier(),
                    # removes 'catinfo' directory with model training logs
                    #  'cat_clf': CatBoostClassifier(allow_writing_files=False, early_stopping_rounds=20),
-                   'cat_clf': CatBoostClassifier(allow_writing_files=False),
+                   'cat_clf': CatBoostClassifier(allow_writing_files=False, verbose=100),
+                   #  'xgb_clf': XGBClassifier(early_stopping_rounds=20, verbosity=0),
+                   'xgb_clf': XGBClassifier(verbosity=0),
                    # From the SGDClassifier docs: "'modified_huber' is another
                    # smooth loss that brings tolerance to outliers as well as
                    # probability estimates", which is required with voting='soft'
                    # in VotingClassifier.
-                   #  'sgd_clf': SGDClassifier(early_stopping=True, loss='modified_huber'),
                    'sgd_clf': SGDClassifier(loss='modified_huber'),
+                   #  'lr_clf': OneVsRestClassifier(LogisticRegression(max_iter=1000)),
+                   'rf_clf': RandomForestClassifier(),
+                   'ada_clf': AdaBoostClassifier()
                    }
 
 # creates list of named classifier tuples for training
