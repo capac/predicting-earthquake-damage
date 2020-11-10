@@ -16,13 +16,15 @@ train_labels_file = data_dir / 'train_labels.csv'
 train_values_df = pd.read_csv(train_values_file, index_col='building_id')
 train_labels_df = pd.read_csv(train_labels_file, index_col='building_id')
 
-num_attrib_list = ['count_floors_pre_eq', 'age', 'area_percentage', 'height_percentage', 'count_families', 'damage_grade']
+num_attrib_list = ['count_floors_pre_eq', 'age', 'area_percentage', 'height_percentage',
+                   'count_families', 'damage_grade']
 
 num_attrib_df = train_values_df.join(train_labels_df)[num_attrib_list]
 
 label_font_size = 14
 g = sns.PairGrid(num_attrib_df, hue='damage_grade', palette='tab10', height=3.0, aspect=1.2)
 g = g.map_diag(plt.hist)
+g = g.map_offdiag(sns.regplot, scatter=False)
 g = g.map_offdiag(plt.scatter, s=60, alpha=0.6)
 g = g.add_legend()
 g._legend.set_title('Damage Level', prop={'size': label_font_size})
@@ -32,13 +34,12 @@ for txt, lb in zip(g._legend.texts, ['Low', 'Medium', 'High']):
 
 xlabels, ylabels = [], []
 
-for ax in g.axes[-1,:]:
+for ax in g.axes[-1, :]:
     xlabel = ax.xaxis.get_label_text()
     xlabels.append(xlabel)
-for ax in g.axes[:,0]:
+for ax in g.axes[:, 0]:
     ylabel = ax.yaxis.get_label_text()
     ylabels.append(ylabel)
-    
 for i in range(len(xlabels)):
     for j in range(len(ylabels)):
         g.axes[j, i].xaxis.set_label_text(xlabels[i])
@@ -49,5 +50,5 @@ for i in range(len(xlabels)):
         g.axes[j, i].tick_params(axis='y', which='major', labelsize=label_font_size)
 
 plt.tight_layout(rect=(0, 0, 0.92, 1))
-plt.savefig(PurePath.joinpath(plot_dir, 'pairplot.png'), dpi=288)
+plt.savefig(PurePath.joinpath(plot_dir, 'pairplot-with-reg.png'), dpi=288)
 # plt.show()
