@@ -20,7 +20,8 @@ num_attrib_list = ['count_floors_pre_eq', 'age', 'area_percentage', 'height_perc
 fig, axes = plt.subplots(figsize=(10, 6))
 mask = np.zeros_like(train_values_df[num_attrib_list].corr())
 mask[np.tril_indices_from(mask)] = True
-hm = sns.heatmap(data=train_values_df[num_attrib_list].corr(), cmap='Spectral', ax=axes, annot=True, fmt='1.4f', mask=mask, annot_kws={'size': 14})
+hm = sns.heatmap(data=train_values_df[num_attrib_list].corr(), cmap='Spectral', ax=axes,
+                 annot=True, fmt='1.4f', mask=mask, annot_kws={'size': 14})
 axes.tick_params(labelsize=14)
 cbar = hm.collections[0].colorbar
 cbar.ax.tick_params(labelsize=14)
