@@ -43,7 +43,7 @@ classifier_dict = {
                    #  'cat_clf': CatBoostClassifier(allow_writing_files=False, early_stopping_rounds=20),
                    'cat_clf': CatBoostClassifier(allow_writing_files=False, verbose=100),
                    #  'xgb_clf': XGBClassifier(early_stopping_rounds=20, verbosity=0),
-                   'xgb_clf': XGBClassifier(verbosity=0),
+                   'xgb_clf': XGBClassifier(verbosity=0, use_label_encoder=False),
                    # From the SGDClassifier docs: "'modified_huber' is another
                    # smooth loss that brings tolerance to outliers as well as
                    # probability estimates", which is required with voting='soft'
