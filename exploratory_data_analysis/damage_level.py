@@ -3,11 +3,11 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import ticker
-from pathlib import Path, PurePath
+from pathlib import Path
 import os
 
 home = os.environ['HOME']
-project_root_dir = Path(home) / 'Programming/Python/driven-data/predicting-earthquake-damage'
+project_root_dir = Path(home) / 'Programming/Python/machine-learning-exercises/driven-data/predicting-earthquake-damage'
 plot_dir = project_root_dir / 'exploratory_data_analysis/plots'
 data_dir = project_root_dir / 'data'
 train_labels_file = data_dir / 'train_labels.csv'
@@ -24,5 +24,4 @@ axes.set_xticklabels(['Low', 'Medium', 'High'], fontsize=14)
 plt.setp(axes.get_yticklabels(), fontsize=14)
 ticks = ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x/1e4))
 axes.yaxis.set_major_formatter(ticks)
-plt.savefig(PurePath.joinpath(plot_dir, 'damage-level-by-grade.png'), dpi=288)
-# plt.show()
+fig.savefig(plot_dir / 'damage-level-by-grade.png', dpi=288, bbox_inches='tight')
