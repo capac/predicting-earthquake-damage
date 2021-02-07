@@ -3,11 +3,11 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from pathlib import Path, PurePath
+from pathlib import Path
 import os
 
 home = os.environ['HOME']
-project_root_dir = Path(home) / 'Programming/Python/driven-data/predicting-earthquake-damage'
+project_root_dir = Path(home) / 'Programming/Python/machine-learning-exercises/driven-data/predicting-earthquake-damage'
 plot_dir = project_root_dir / 'exploratory_data_analysis/plots'
 data_dir = project_root_dir / 'data'
 
@@ -16,8 +16,8 @@ train_labels_file = data_dir / 'train_labels.csv'
 train_values_df = pd.read_csv(train_values_file, index_col='building_id')
 train_labels_df = pd.read_csv(train_labels_file, index_col='building_id')
 
-num_attrib_list = ['count_floors_pre_eq', 'age', 'area_percentage', 'height_percentage',
-                   'count_families', 'damage_grade']
+num_attrib_list = ['count_floors_pre_eq', 'age', 'area_percentage',
+                   'height_percentage', 'count_families', 'damage_grade']
 
 num_attrib_df = train_values_df.join(train_labels_df)[num_attrib_list]
 
@@ -50,5 +50,4 @@ for i in range(len(xlabels)):
         g.axes[j, i].tick_params(axis='y', which='major', labelsize=label_font_size)
 
 plt.tight_layout(rect=(0, 0, 0.92, 1))
-plt.savefig(PurePath.joinpath(plot_dir, 'pairplot-with-reg.png'), dpi=288)
-# plt.show()
+plt.savefig(plot_dir / 'pairplot-with-reg.png', dpi=288, bbox_inches='tight')
